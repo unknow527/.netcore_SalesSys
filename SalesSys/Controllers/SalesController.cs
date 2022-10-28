@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SalesSys.Models;
+using SQLitePCL;
 
 namespace SalesSys.Controllers
 {
@@ -9,26 +11,41 @@ namespace SalesSys.Controllers
     [ApiController]
     public class SalesController : ControllerBase
     {
-        [HttpGet]
-        public List<TProduct> GetProducts()
+        // **實例化-------------------------------------------------------------------------
+        // 1. 宣告私有的全域變數
+        private readonly dbShoppingContext _dbShoppingContext;
+        // 2. 建構函數，接收實例
+        public SalesController(dbShoppingContext dbShoppingcontext)
         {
-            List<TProduct> products =new List<TProduct>();
+            _dbShoppingContext = dbShoppingcontext;
 
-            //## Context繼承至IDisposable，使用完要釋放:
-            //1. 最後輸入context.Dispose(); 釋放。
-            //dbShoppingContext context = new dbShoppingContext();
-            //products = context.TProducts.ToList();
-            //context.Dispose();
+            //全局取消追蹤機制
+            //dbShoppingcontext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        }
+        // -------------------------------------------------------------------------------
 
-            //2.使用using(){ }包覆，結束後自動釋放。
-            using (dbShoppingContext context = new dbShoppingContext())
-            {
-                products = context.TProducts.ToList();
-            }
+        [HttpGet]
+        public TProduct GetProducts()
+        {
+            //局部取消追蹤機制，提高效能
+            IQueryable<TProduct> products = _dbShoppingContext.TProducts.AsNoTracking();
+            //查詢時不會追蹤
+            var product = products.Single(m => m.FId == 35);
+            product.FPname = "test";
 
-            return products;
+            _dbShoppingContext.Update(product); //追蹤機制啟動時，沒update也能更新資料庫
+            _dbShoppingContext.SaveChanges();
 
+            return product;
+        }
 
+        [HttpGet]
+        public List<TOrder> GetOrders()
+        {
+            //List<TOrder> orders = _dbShoppingContext.TOrders.ToList();
+            List<TOrder> orders = _dbShoppingContext.TOrders.ToList();
+
+            return orders;
         }
     }
 }

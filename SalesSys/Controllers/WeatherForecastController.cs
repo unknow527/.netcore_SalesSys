@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SalesSys.Models;
 
 namespace SalesSys.Controllers
 {
@@ -29,5 +31,6 @@ namespace SalesSys.Controllers
             })
             .ToArray();
         }
+
     }
 }
