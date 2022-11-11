@@ -4,6 +4,7 @@ using SalesSys.Models;
 using SQLitePCL;
 using SalesSys.ViewModels;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace SalesSys.Controllers
 {
@@ -17,14 +18,78 @@ namespace SalesSys.Controllers
             _context = context;
         }
 
+        // RESTful風格寫法，Controller中的同類型方法都只能有一個，如Get、Post，透過加上路由(參數)識別。
+
+        // Get
         [HttpGet]
-        public List<TProduct> Get()
+        public ActionResult<IEnumerable<TProduct>> Get()
         {
-            //會造成循環引用，要透過後續方法解決
-            var products = new ProductViewModel(_context).GetProducts();
+            return _context.TProducts;
+        }
 
-            return products;
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
+        {
+            //var result = _context.TProducts.FirstOrDefault(m => m.FId == id);
+            //var result = from p in _context.TProducts where(p.FId == id) select p;
+            var result = _context.TProducts.Find(id);
+            if (result == null)
+            {
+                return NotFound("沒有資料");
+            }
+            return Ok(result); //回傳HTTP 200
+        }
+        [HttpPost]
+        public ActionResult<TProduct> Post([FromBody] TProduct product)
+        {
+            _context.TProducts.Add(product);
+            _context.SaveChanges();
+            
+            return CreatedAtAction(nameof(Post), new { id = product.FId }, product);
+        }
 
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody] TProduct product)
+        {
+            if (id != product.FId)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(product).State = EntityState.Modified;
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.TProducts.Any(e => e.FId == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    return StatusCode(500, "存取發生錯誤");
+                }
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var result = _context.TProducts.Find(id);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            _context.TProducts.Remove(result);
+            _context.SaveChanges();
+
+            return NoContent();
         }
     }
 }

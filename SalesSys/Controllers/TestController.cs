@@ -33,14 +33,14 @@ namespace SalesSys.Controllers
             //dbShoppingcontext.Dispose();
 
             //2. 使用using(){ }包覆，結束後自動釋放。
-            using (dbShoppingContext context = new dbShoppingContext())
-            {
-                products = context.TProducts.ToList();
-            }
+            //using (dbShoppingContext context = new dbShoppingContext())
+            //{
+            //    products = context.TProducts.ToList();
+            //}
 
 
             //3. 靜態化處理(先在容器中實例化)
-            //products = _dbShoppingContext.TProducts.ToList(); 
+            products = _dbShoppingContext.TProducts.ToList(); 
 
             return products;
 
